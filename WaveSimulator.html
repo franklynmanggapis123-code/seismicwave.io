@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Period vs Frequency Simulator</title>
+    <style>
+        body { 
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background: #ffffff; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+        .controls { 
+            margin-bottom: 15px; 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 6px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            gap: 15px; 
+            width: 90%; 
+            max-width: 800px; 
+            box-sizing: border-box; 
+            border: 1px solid #e0e0e0;
+        }
+        label { font-weight: bold; color: #333; font-size: 15px; }
+        input[type=range] { width: 250px; cursor: pointer; }
+        canvas { 
+            width: 90%; 
+            max-width: 800px; 
+            background: #f1f5f9; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 4px; 
+            display: block; 
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <label>Frequency (f): <span id="freqValSpan" style="color: #b37700;">1.0</span> Hz</label>
+        <input type="range" id="freqSliderInput" min="0.1" max="5.0" step="0.1" value="1.0">
+        <label>Period (T): <span id="periodValSpan" style="color: #002e5b;">1.00</span> s</label>
+    </div>
+    <canvas id="waveCanvasDiagram" width="800" height="250"></canvas>
+
+    <script>
+        (function() {
+            function init() {
+                var canvas = document.getElementById('waveCanvasDiagram');
+                if(!canvas) return;
+                var ctx = canvas.getContext('2d');
+                var slider = document.getElementById('freqSliderInput');
+                var freqValSpan = document.getElementById('freqValSpan');
+                var periodValSpan = document.getElementById('periodValSpan');
+
+                function draw(f) {
+                    var width = canvas.width;
+                    var height = canvas.height;
+                    var timeWindow = 4.0; 
+                    var amplitude = height * 0.35;
+                    var centerY = height / 2 + 15;
+
+                    ctx.clearRect(0, 0, width, height);
+
+                    // Grid and time labels
+                    ctx.strokeStyle = '#e2e8f0';
+                    ctx.lineWidth = 1;
+                    ctx.font = '12px sans-serif';
+                    ctx.fillStyle = '#64748b';
+                    ctx.textAlign = 'center';
+                    for(var i=0; i<=timeWindow; i++) {
+                        var x = (i/timeWindow) * width;
+                        ctx.beginPath(); ctx.moveTo(x, centerY - amplitude - 10); ctx.lineTo(x, centerY + amplitude + 10); ctx.stroke();
+                        if(i > 0) ctx.fillText(i + 's', x, height - 10);
+                    }
+                    ctx.fillText('0s', 15, height - 10);
+
+                    // Center line
+                    ctx.beginPath();
+                    ctx.moveTo(0, centerY);
+                    ctx.lineTo(width, centerY);
+                    ctx.strokeStyle = '#94a3b8';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // Sine Wave
+                    ctx.beginPath();
+                    ctx.moveTo(0, centerY);
+                    for(var px = 0; px <= width; px++) {
+                        var t = (px / width) * timeWindow;
+                        var y = centerY - amplitude * Math.sin(2 * Math.PI * f * t);
+                        ctx.lineTo(px, y);
+                    }
+                    ctx.strokeStyle = '#002e5b';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+
+                    // Period Annotation
+                    var period = 1 / f;
+                    if (period <= timeWindow) {
+                        var periodPx = (period / timeWindow) * width;
+                        ctx.beginPath();
+                        ctx.moveTo(2, 25);
+                        ctx.lineTo(periodPx - 2, 25);
+                        ctx.strokeStyle = '#b37700';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+
+                        // Arrow markers
+                        ctx.beginPath(); ctx.moveTo(2, 20); ctx.lineTo(2, 30); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(periodPx-2, 20); ctx.lineTo(periodPx-2, 30); ctx.stroke();
+
+                        ctx.fillStyle = '#b30000';
+                        ctx.font = 'bold 14px sans-serif';
+                        ctx.fillText('Period (T) = ' + period.toFixed(2) + 's', periodPx / 2, 18);
+                    }
+                }
+
+                slider.addEventListener('input', function(e) {
+                    var f = parseFloat(e.target.value);
+                    freqValSpan.textContent = f.toFixed(1);
+                    periodValSpan.textContent = (1/f).toFixed(2);
+                    draw(f);
+                });
+
+                draw(parseFloat(slider.value));
+            }
+            
+            if(document.readyState === 'complete' || document.readyState === 'interactive') {
+                setTimeout(init, 100);
+            } else {
+                window.addEventListener('DOMContentLoaded', init);
+            }
+        })();
+    </script>
+</body>
+</html>
